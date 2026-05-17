@@ -4,7 +4,7 @@ import { formatNumber } from '../utils/numberFormat';
 import { Shield, Sword, Coins, Star } from 'lucide-react';
 
 export const PlayerStats: React.FC = () => {
-  const { level, exp, maxExp, gold, spiritStones, clickDamage, autoDamage, currentHp, maxHp } = usePlayerStore();
+  const { level, exp, maxExp, gold, spiritStones, clickDamage, autoDamage, currentHp, maxHp, hpRegen, defense, critChance, critDamage, blockChance } = usePlayerStore();
 
   const expPercentage = Math.min(100, (exp / maxExp) * 100);
   const hpPercentage = Math.max(0, Math.min(100, (currentHp / maxHp) * 100));
@@ -57,6 +57,30 @@ export const PlayerStats: React.FC = () => {
             <div className="text-xs text-gray-400">Auto DPS</div>
             <div className="font-bold">{formatNumber(autoDamage)}/s</div>
           </div>
+        </div>
+        <div className="bg-metin-dark/50 p-2 rounded flex flex-col justify-center border border-metin-border text-xs gap-1">
+           <div className="flex justify-between px-2">
+             <span className="text-gray-400">Defense:</span> 
+             <span className="font-bold">{formatNumber(defense)}</span>
+           </div>
+           <div className="flex justify-between px-2">
+             <span className="text-gray-400">Block:</span> 
+             <span className="font-bold">{(blockChance * 100).toFixed(1)}%</span>
+           </div>
+           <div className="flex justify-between px-2">
+             <span className="text-gray-400">HP Regen:</span> 
+             <span className="font-bold text-green-400">+{formatNumber(hpRegen)}/s</span>
+           </div>
+        </div>
+        <div className="bg-metin-dark/50 p-2 rounded flex flex-col justify-center border border-metin-border text-xs gap-1">
+           <div className="flex justify-between px-2">
+             <span className="text-gray-400">Crit Chance:</span> 
+             <span className="font-bold text-metin-red">{(critChance * 100).toFixed(1)}%</span>
+           </div>
+           <div className="flex justify-between px-2">
+             <span className="text-gray-400">Crit Dmg:</span> 
+             <span className="font-bold text-metin-red">{(critDamage * 100).toFixed(0)}%</span>
+           </div>
         </div>
       </div>
     </div>

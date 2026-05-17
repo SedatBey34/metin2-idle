@@ -9,10 +9,15 @@ export interface PlayerStats {
   autoDamage: number;
   maxHp: number;
   currentHp: number;
+  hpRegen: number;
+  defense: number;
+  critChance: number;
+  critDamage: number;
+  blockChance: number;
 }
 
 export type ItemRarity = 'Common' | 'Uncommon' | 'Rare' | 'Epic' | 'Legendary' | 'Mythic' | 'Godlike';
-export type ItemType = 'Weapon' | 'Armor' | 'Helmet';
+export type ItemType = 'Weapon' | 'Armor' | 'Helmet' | 'Shield' | 'Bracelet' | 'Accessory';
 
 export interface Item {
   id: string;
@@ -21,7 +26,16 @@ export interface Item {
   rarity: ItemRarity;
   level: number;
   upgradeLevel: number; // +0 to +9
-  baseBonus: number; // e.g., damage for weapon, hp for armor
+  baseBonus: number; // For backward compatibility or primary stat
+  stats: {
+    attack?: number;
+    defense?: number;
+    maxHp?: number;
+    hpRegen?: number;
+    critChance?: number;
+    critDamage?: number;
+    blockChance?: number;
+  };
 }
 
 export type BossTier = 'None' | 'Normal' | 'Mini' | 'Medium' | 'Major';

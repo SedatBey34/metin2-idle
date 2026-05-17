@@ -43,11 +43,20 @@ export const useCombatStore = create<CombatStore>((set, get) => ({
     set({ enemy: generateEnemy(currentStage, bossTier) });
   },
 
-  dealDamage: (amount: number) => {
+  dealDamage: (amount: number, _isClick: boolean = false) => {
     const { enemy, currentStage, highestStage, killsInStage } = get();
     if (!enemy || get().isRespawning) return;
 
-    const newHp = enemy.currentHp - amount;
+    let finalAmount = amount;
+    
+    // Apply crit
+    const playerStats = usePlayerStore.getState();
+    const isCrit = Math.random() < playerStats.critChance;
+    if (isCrit) {
+      finalAmount = Math.floor(amount * playerStats.critDamage);
+    }
+
+    const newHp = enemy.currentHp - finalAmount;
     
     if (newHp <= 0) {
       // Enemy dies
@@ -65,6 +74,10 @@ export const useCombatStore = create<CombatStore>((set, get) => ({
       let nextHighest = highestStage;
 
       if (enemy.isBoss) {
+        // Heal player for 25% of max HP on boss kill
+        const maxHp = usePlayerStore.getState().maxHp;
+        usePlayerStore.getState().heal(Math.floor(maxHp * 0.25));
+
         // Boss defeated! Advance to next stage if we're on highest
         if (currentStage === highestStage) {
           nextHighest = currentStage + 1;

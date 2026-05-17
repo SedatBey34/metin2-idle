@@ -22,6 +22,9 @@ export const useInventoryStore = create<InventoryStore>((set, get) => ({
     Weapon: null,
     Armor: null,
     Helmet: null,
+    Shield: null,
+    Bracelet: null,
+    Accessory: null,
   },
 
   rollDrop: (stageLevel: number, rarity: ItemRarity) => {
@@ -113,7 +116,7 @@ export const useInventoryStore = create<InventoryStore>((set, get) => ({
   resetForRebirth: () => {
     set({
       items: [],
-      equipped: { Weapon: null, Armor: null, Helmet: null },
+      equipped: { Weapon: null, Armor: null, Helmet: null, Shield: null, Bracelet: null, Accessory: null },
     });
   },
 

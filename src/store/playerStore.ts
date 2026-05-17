@@ -6,7 +6,16 @@ interface PlayerStore extends PlayerStats {
   addGold: (amount: number) => void;
   addExp: (amount: number) => void;
   addSpiritStones: (amount: number) => void;
-  updateStats: (clickDamage: number, autoDamage: number, maxHp: number) => void;
+  updateStats: (stats: {
+    clickDamage: number;
+    autoDamage: number;
+    maxHp: number;
+    hpRegen: number;
+    defense: number;
+    critChance: number;
+    critDamage: number;
+    blockChance: number;
+  }) => void;
   takeDamage: (amount: number) => void;
   heal: (amount: number) => void;
   applyDeathPenalty: () => void;
@@ -25,6 +34,11 @@ const initialState: PlayerStats = {
   autoDamage: 0,
   maxHp: 100,
   currentHp: 100,
+  hpRegen: 1,
+  defense: 0,
+  critChance: 0.05,
+  critDamage: 1.5,
+  blockChance: 0,
 };
 
 export const usePlayerStore = create<PlayerStore>((set) => ({
@@ -43,17 +57,21 @@ export const usePlayerStore = create<PlayerStore>((set) => ({
         newLevel++;
         newMaxExp = calculateNextLevelExp(newLevel);
       }
+      let hpUpdate = {};
+      if (newLevel > state.level) {
+        hpUpdate = { currentHp: state.maxHp };
+      }
       
-      return { exp: newExp, level: newLevel, maxExp: newMaxExp };
+      return { exp: newExp, level: newLevel, maxExp: newMaxExp, ...hpUpdate };
     });
   },
   
   addSpiritStones: (amount) => set((state) => ({ spiritStones: state.spiritStones + amount })),
   
-  updateStats: (clickDamage, autoDamage, maxHp) => set((state) => {
+  updateStats: (stats) => set((state) => {
     const hpRatio = state.currentHp / state.maxHp;
-    const newCurrentHp = state.currentHp === 0 ? 0 : Math.max(1, Math.floor(maxHp * hpRatio));
-    return { clickDamage, autoDamage, maxHp, currentHp: newCurrentHp };
+    const newCurrentHp = state.currentHp === 0 ? 0 : Math.max(1, Math.floor(stats.maxHp * hpRatio));
+    return { ...stats, currentHp: newCurrentHp };
   }),
 
   takeDamage: (amount) => set((state) => ({

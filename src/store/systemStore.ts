@@ -56,7 +56,21 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
         // Apply enemy damage to player
         const enemy = useCombatStore.getState().enemy;
         if (enemy && enemy.currentHp > 0) {
-          usePlayerStore.getState().takeDamage(enemy.damage * ticks);
+          const playerStats = usePlayerStore.getState();
+          
+          // HP Regeneration
+          if (playerStats.currentHp < playerStats.maxHp && playerStats.currentHp > 0) {
+            playerStats.heal(playerStats.hpRegen * ticks);
+          }
+
+          // Damage calculation with block and defense
+          let finalDamage = 0;
+          const isBlocked = Math.random() < Math.min(playerStats.blockChance, 0.75); // Cap block at 75%
+
+          if (!isBlocked) {
+            finalDamage = Math.max(1, enemy.damage - playerStats.defense);
+            playerStats.takeDamage(finalDamage * ticks);
+          }
           
           if (usePlayerStore.getState().currentHp <= 0) {
             useCombatStore.getState().setRespawning(true);
@@ -84,17 +98,28 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
 
     let baseDmg = 5 + level * 2;
     let baseHp = 100 + level * 20;
-    
-    // Add weapon damage
-    if (equipped.Weapon) {
-      baseDmg += getUpgradeBonus(equipped.Weapon);
-    }
-    if (equipped.Armor) {
-      baseHp += getUpgradeBonus(equipped.Armor);
-    }
-    if (equipped.Helmet) {
-      baseHp += getUpgradeBonus(equipped.Helmet);
-    }
+    // Base regen scaling with level
+    let baseRegen = 1 + Math.floor(level * 0.5);
+    let baseDef = Math.floor(level * 0.5);
+    let baseCritChance = 0.05;
+    let baseCritDamage = 1.5;
+    let baseBlock = 0;
+
+    Object.values(equipped).forEach((item) => {
+      if (item && item.stats) {
+        if (item.stats.attack) baseDmg += getUpgradeBonus(item.stats.attack, item.upgradeLevel);
+        if (item.stats.maxHp) baseHp += getUpgradeBonus(item.stats.maxHp, item.upgradeLevel);
+        if (item.stats.defense) baseDef += getUpgradeBonus(item.stats.defense, item.upgradeLevel);
+        if (item.stats.hpRegen) baseRegen += getUpgradeBonus(item.stats.hpRegen, item.upgradeLevel);
+        if (item.stats.critChance) baseCritChance += (item.stats.critChance * Math.pow(1.05, item.upgradeLevel));
+        if (item.stats.critDamage) baseCritDamage += (item.stats.critDamage * Math.pow(1.05, item.upgradeLevel));
+        if (item.stats.blockChance) baseBlock += (item.stats.blockChance * Math.pow(1.05, item.upgradeLevel));
+      } else if (item && item.baseBonus) { // Fallback for old save logic
+        if (item.type === 'Weapon') baseDmg += getUpgradeBonus(item.baseBonus, item.upgradeLevel);
+        if (item.type === 'Armor') baseHp += getUpgradeBonus(item.baseBonus, item.upgradeLevel);
+        if (item.type === 'Helmet') baseHp += getUpgradeBonus(item.baseBonus, item.upgradeLevel);
+      }
+    });
 
     const artifactDmgMult = getMultiplier('dmg_boost');
     
@@ -102,7 +127,16 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
     const finalAutoDamage = Math.floor(finalClickDamage * 0.1);
     const maxHp = Math.floor(baseHp);
 
-    usePlayerStore.getState().updateStats(finalClickDamage, finalAutoDamage, maxHp);
+    usePlayerStore.getState().updateStats({
+      clickDamage: finalClickDamage,
+      autoDamage: finalAutoDamage,
+      maxHp,
+      hpRegen: baseRegen,
+      defense: baseDef,
+      critChance: baseCritChance,
+      critDamage: baseCritDamage,
+      blockChance: baseBlock
+    });
   },
 
   calculateOfflineProgress: (timeDiffMs: number) => {
