@@ -63,14 +63,14 @@ export const useInventoryStore = create<InventoryStore>((set, get) => ({
   sellItem: (id: string) => {
     const item = get().items.find((i) => i.id === id);
     if (!item) return;
-    
+
     // Sell price calculation based on level and rarity
     const baseValue = item.level * 10;
     const rarityMultiplier = item.rarity === 'Legendary' ? 10 : item.rarity === 'Epic' ? 5 : item.rarity === 'Rare' ? 2 : 1;
     const sellValue = baseValue * rarityMultiplier * (item.upgradeLevel + 1);
 
     usePlayerStore.getState().addGold(sellValue);
-    
+
     set((state) => ({
       items: state.items.filter((i) => i.id !== id),
     }));
@@ -80,7 +80,7 @@ export const useInventoryStore = create<InventoryStore>((set, get) => ({
     const itemIndex = get().items.findIndex((i) => i.id === id);
     const item = get().items[itemIndex];
     if (!item) return { success: false, message: 'Item not found.' };
-    
+
     if (item.upgradeLevel >= 9) {
       return { success: false, message: 'Item is at max level.' };
     }

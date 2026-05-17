@@ -1,5 +1,12 @@
 import type { EnemyInfo, BossTier } from '../types';
 
+export const getEnemyTier = (stage: number): BossTier => {
+  if (stage % 50 === 0) return 'Major';
+  if (stage % 25 === 0) return 'Medium';
+  if (stage % 10 === 0) return 'Mini';
+  return 'None';
+};
+
 export const calculateEnemyHp = (level: number, bossTier: BossTier): number => {
   const base = 10;
   let multiplier = 1;
@@ -53,7 +60,7 @@ export const generateEnemy = (level: number, bossTier: BossTier = 'None'): Enemy
   const dmg = calculateEnemyDamage(level, bossTier);
   return {
     id: `enemy_${level}_${Date.now()}`,
-    name: isBoss ? `${bossTier !== 'Normal' ? bossTier + ' ' : ''}Boss Lvl ${level}` : `Wild Dog Lvl ${level}`,
+    name: isBoss ? `${bossTier} Boss Lvl ${level}` : `Wild Dog Lvl ${level}`,
     level,
     isBoss,
     bossTier,

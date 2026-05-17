@@ -1,9 +1,9 @@
 import { create } from 'zustand';
-import type { EnemyInfo, BossTier } from '../types';
-import { generateEnemy } from '../game/math';
+import type { EnemyInfo } from '../types';
+import { generateEnemy, getEnemyTier } from '../game/math';
 import { usePlayerStore } from './playerStore';
 import { useInventoryStore } from './inventoryStore';
-import { rollLootRarity } from '../game/lootService';
+import { attemptBossDrop } from '../game/items';
 
 interface CombatStore {
   currentStage: number;
@@ -29,17 +29,10 @@ export const useCombatStore = create<CombatStore>((set, get) => ({
   enemy: null,
 
   initializeEnemy: () => {
-    const { currentStage, killsInStage } = get();
-    let bossTier: BossTier = 'None';
-    
-    // 10th enemy is a boss
-    if (killsInStage === 9) {
-      if (currentStage % 50 === 0) bossTier = 'Major';
-      else if (currentStage % 25 === 0) bossTier = 'Medium';
-      else if (currentStage % 10 === 0) bossTier = 'Mini';
-      else bossTier = 'Normal';
-    }
-    
+    const { currentStage } = get();
+    // Aşamaya göre Boss olup olmadığına doğrudan karar veriyoruz
+    const bossTier = getEnemyTier(currentStage);
+
     set({ enemy: generateEnemy(currentStage, bossTier) });
   },
 
@@ -48,7 +41,7 @@ export const useCombatStore = create<CombatStore>((set, get) => ({
     if (!enemy || get().isRespawning) return;
 
     let finalAmount = amount;
-    
+
     // Apply crit
     const playerStats = usePlayerStore.getState();
     const isCrit = Math.random() < playerStats.critChance;
@@ -57,18 +50,20 @@ export const useCombatStore = create<CombatStore>((set, get) => ({
     }
 
     const newHp = enemy.currentHp - finalAmount;
-    
+
     if (newHp <= 0) {
       // Enemy dies
       usePlayerStore.getState().addGold(enemy.goldDrop);
       usePlayerStore.getState().addExp(enemy.expDrop);
-      
-      // Check for item drop
-      const rarity = rollLootRarity(enemy.isBoss, enemy.bossTier);
+
+      // Şanslı Boss Drop Kontrolü
+      const rarity = attemptBossDrop(enemy.bossTier);
       if (rarity) {
-         useInventoryStore.getState().rollDrop(currentStage, rarity);
+        useInventoryStore.getState().rollDrop(currentStage, rarity);
       }
 
+      // Boss aşamasındaysak 1, normal aşamadaysak 10 kill gerekiyor
+      const requiredKills = enemy.bossTier !== 'None' ? 1 : 10;
       let nextKills = killsInStage + 1;
       let nextStage = currentStage;
       let nextHighest = highestStage;
@@ -77,22 +72,23 @@ export const useCombatStore = create<CombatStore>((set, get) => ({
         // Heal player for 25% of max HP on boss kill
         const maxHp = usePlayerStore.getState().maxHp;
         usePlayerStore.getState().heal(Math.floor(maxHp * 0.25));
+      }
 
-        // Boss defeated! Advance to next stage if we're on highest
+      // Gerekli öldürme sayısına ulaşıldıysa stage atla
+      if (nextKills >= requiredKills) {
         if (currentStage === highestStage) {
           nextHighest = currentStage + 1;
         }
-        // Auto progress to next stage
         nextStage = currentStage + 1;
         nextKills = 0;
       }
 
-      set({ 
-        currentStage: nextStage, 
-        killsInStage: nextKills, 
-        highestStage: nextHighest 
+      set({
+        currentStage: nextStage,
+        killsInStage: nextKills,
+        highestStage: nextHighest
       });
-      
+
       get().initializeEnemy();
     } else {
       set({ enemy: { ...enemy, currentHp: newHp } });

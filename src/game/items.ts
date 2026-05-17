@@ -1,5 +1,14 @@
-import type { Item, ItemRarity, ItemType } from '../types';
-import { RARITY_MULTIPLIERS } from './lootService';
+import type { Item, ItemRarity, ItemType, BossTier } from '../types';
+
+export const RARITY_MULTIPLIERS: Record<ItemRarity, number> = {
+  Common: 1,
+  Uncommon: 1.3,
+  Rare: 1.8,
+  Epic: 2.5,
+  Legendary: 4.0,
+  Mythic: 6.0,
+  Godlike: 10.0,
+};
 
 const WEAPON_NAMES = ['Sword', 'Blade', 'Glaive', 'Dagger', 'Bow'];
 const ARMOR_NAMES = ['Plate Armor', 'Suit', 'Vest', 'Robes'];
@@ -8,11 +17,39 @@ const SHIELD_NAMES = ['Kite Shield', 'Buckler', 'Tower Shield', 'Pentagon Shield
 const BRACELET_NAMES = ['Silver Bracelet', 'Gold Bracelet', 'Crystal Bracelet'];
 const ACCESSORY_NAMES = ['Necklace', 'Earrings', 'Ring', 'Pendant'];
 
+// Şansa bağlı özel Boss Drop hesaplayıcısı
+export const attemptBossDrop = (tier: BossTier): ItemRarity | null => {
+  const dropRoll = Math.random() * 100; // 0 ile 100 arası
+
+  switch (tier) {
+    case 'Mini':
+      // %25 Şansla drop atar
+      if (dropRoll <= 25) {
+        return Math.random() <= 0.3 ? 'Uncommon' : 'Common'; // %30 ihtimalle Uncommon, %70 Common
+      }
+      break;
+    case 'Medium':
+      // %15 Şansla drop atar
+      if (dropRoll <= 15) {
+        return Math.random() <= 0.3 ? 'Epic' : 'Rare'; // %30 ihtimalle Epic, %70 Rare
+      }
+      break;
+    case 'Major':
+      // Sadece %5 Şansla Legendary atar
+      if (dropRoll <= 5) {
+        return 'Legendary';
+      }
+      break;
+  }
+
+  return null; // Şans tutmadıysa veya normal canavarsa eşya düşmez
+};
+
 export const generateItemDrop = (stageLevel: number, rarity: ItemRarity): Item => {
   const typeRoll = Math.random();
   let type: ItemType = 'Weapon';
   let nameStr = WEAPON_NAMES[Math.floor(Math.random() * WEAPON_NAMES.length)];
-  
+
   if (typeRoll > 0.83) {
     type = 'Armor';
     nameStr = ARMOR_NAMES[Math.floor(Math.random() * ARMOR_NAMES.length)];
@@ -62,7 +99,7 @@ export const generateItemDrop = (stageLevel: number, rarity: ItemRarity): Item =
   }
 
   return {
-    id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+    id: `item_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
     name: `${rarity} ${nameStr}`,
     type,
     rarity,
