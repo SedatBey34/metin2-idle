@@ -1,0 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-metin-dark text-gray-300 font-crimson overflow-hidden selection:bg-metin-red selection:text-white m-0 p-0;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-cinzel text-metin-gold tracking-wide m-0;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-metin-red text-white font-cinzel py-2 px-4 border border-metin-gold/50 rounded shadow-[0_0_10px_rgba(139,0,0,0.5)] hover:bg-red-800 hover:shadow-[0_0_15px_rgba(212,175,55,0.4)] transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100;
+  }
+  .panel {
+    @apply bg-metin-panel border border-metin-border rounded-lg shadow-lg relative overflow-hidden;
+  }
+  .panel-header {
+    @apply bg-metin-dark/50 border-b border-metin-border p-3 text-center;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #141416; 
+}
+::-webkit-scrollbar-thumb {
+  background: #2a2a2e; 
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #8b0000; 
+}
